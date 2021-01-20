@@ -1,30 +1,44 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using Catalogue.Dto;
 using Catalogue.Entities;
 using Catalogue.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Catalogue.Controller
 {
+
+    // GET - /items
+
     [ApiController]
-    [Route("items")]
-    public class ItemsController{
-        private readonly InMemItemsRepositories repository;
+    [Route("[Controller]")] 
+    public class ItemsController : ControllerBase
+    {
+        private readonly IItemsRepositories repository;
         
-        public ItemsController(){
-            repository=new InMemItemsRepositories();
+        public ItemsController(IItemsRepositories repository){
+            this.repository=repository;
         }
 
         //get  /items
         [HttpGet]
-        public IEnumerable<Item> GetItems(){
-            var items=repository.GetItems();
+        public IEnumerable<ItemsDto> GetItems(){
+            var items=repository.GetItems().Select(item => item.AsDto());
             return items;
         }
 
-        [HttpGet]
-        public ActionResult<Item> GetItem(Guid id){
-            
-        } 
-
+        [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<ItemsDto> GetItem(Guid id){
+            var item= repository.GetItem(id);
+            if(item == null){
+                 return NotFound();
+            }
+            return item.AsDto();
+        }
     }
 }
