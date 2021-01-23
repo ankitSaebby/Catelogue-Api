@@ -23,5 +23,16 @@ namespace Catalogue.Repositories{
         {
             return Items.Where(Item => Item.Id == id).SingleOrDefault();
         }
+
+        public void CreateItem(Item item)
+        {
+            Items.Add(item);
+        }
+
+        public void upadateItem(Item item)
+        {
+            var itm=Items.FindIndex(exItem => exItem.Id == item.Id);
+            Items[itm]=item;
+        }
     }
 }
