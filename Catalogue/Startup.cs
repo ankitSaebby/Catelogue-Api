@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Catalogue.Repositories;
+using Catalogue.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -12,6 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
 
 namespace Catalogue
 {
@@ -28,9 +33,19 @@ namespace Catalogue
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddSingleton<IItemsRepositories,InMemItemsRepositories>();
+            BsonSerializer.RegisterSerializer(new GuidSerializer(BsonType.String));
+            BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(BsonType.String));
 
             services.AddControllers();
+
+            services.AddSingleton<IMongoClient>(ServiceProvider =>
+            {
+                var settings =Configuration.GetSection(nameof(MongodbSettings)).Get<MongodbSettings>();
+                return new MongoClient(settings.ConnectionString);
+            });
+
+            services.AddSingleton<IItemsRepositories,MongoDbItemsRepository>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Catalogue", Version = "v1" });
